@@ -20,7 +20,7 @@ class DocumentProcessor:
     def __init__(self):
         self.logger = get_processing_logger()
         self.ai_handler = None
-        self.current_model = None  # This was not being set properly
+        self.current_model = None
         
     def set_ai_handler(self, ai_handler: AIHandler):
         """Set AI handler for processing"""
@@ -65,9 +65,9 @@ class DocumentProcessor:
             if not edited_markdown:
                 return False, "AI processing failed - empty response"
             
-            # Generate output files
-            success, message = self._generate_output_files(
-                input_path, output_dir, markdown_content, edited_markdown
+            # Generate single output file
+            success, message = self._generate_output_file(
+                input_path, output_dir, edited_markdown
             )
             
             if success:
@@ -103,64 +103,41 @@ class DocumentProcessor:
             self.logger.error(f"DOCX to Markdown conversion failed: {str(e)}")
             raise
     
-    def _generate_output_files(self, input_path: str, output_dir: str, 
-                             original_md: str, edited_md: str) -> Tuple[bool, str]:
+    def _generate_output_file(self, input_path: str, output_dir: str, 
+                            edited_md: str) -> Tuple[bool, str]:
         """
-        Generate both clean and highlighted output files
+        Generate single output file with AI-edited content
         """
         try:
             input_path_obj = Path(input_path)
             base_name = input_path_obj.stem
             output_path_obj = Path(output_dir)
             
-            # Generate clean output file
-            clean_filename = self._get_unique_filename(
-                output_path_obj, base_name, "_Edited_Clean"
+            # Generate single output file
+            output_filename = self._get_unique_filename(
+                output_path_obj, base_name, "_Edited"
             )
-            clean_path = output_path_obj / clean_filename
+            output_path = output_path_obj / output_filename
             
-            success1 = self._save_clean_docx(edited_md, str(clean_path))
-            if not success1:
-                return False, "Failed to generate clean output file"
+            success = self._save_docx(edited_md, str(output_path))
+            if not success:
+                return False, "Failed to generate output file"
             
-            # Generate highlighted output file
-            highlighted_filename = self._get_unique_filename(
-                output_path_obj, base_name, "_Edited_Highlighted"
-            )
-            highlighted_path = output_path_obj / highlighted_filename
-            
-            success2 = self._save_highlighted_docx(original_md, edited_md, str(highlighted_path))
-            if not success2:
-                return False, "Failed to generate highlighted output file"
-            
-            return True, f"Files generated: {clean_filename}, {highlighted_filename}"
+            return True, f"File generated: {output_filename}"
             
         except Exception as e:
             self.logger.error(f"Output file generation failed: {str(e)}")
             return False, f"Output generation error: {str(e)}"
     
-    def _save_clean_docx(self, markdown_content: str, output_path: str) -> bool:
-        """Save clean DOCX file from Markdown"""
+    def _save_docx(self, markdown_content: str, output_path: str) -> bool:
+        """Save DOCX file from Markdown"""
         try:
             doc = markdown_to_docx(markdown_content)
             doc.save(output_path)
-            self.logger.info(f"Clean DOCX saved: {output_path}")
+            self.logger.info(f"DOCX saved: {output_path}")
             return True
         except Exception as e:
-            self.logger.error(f"Failed to save clean DOCX: {str(e)}")
-            return False
-    
-    def _save_highlighted_docx(self, original_md: str, edited_md: str, output_path: str) -> bool:
-        """Save highlighted DOCX file showing changes"""
-        try:
-            # This would implement change highlighting logic
-            # For now, save the edited version with basic formatting
-            doc = markdown_to_docx(edited_md)
-            doc.save(output_path)
-            self.logger.info(f"Highlighted DOCX saved: {output_path}")
-            return True
-        except Exception as e:
-            self.logger.error(f"Failed to save highlighted DOCX: {str(e)}")
+            self.logger.error(f"Failed to save DOCX: {str(e)}")
             return False
     
     def _get_unique_filename(self, directory: Path, base_name: str, suffix: str) -> str:

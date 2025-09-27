@@ -106,7 +106,7 @@ def setup_logging():
     
     # File handler
     try:
-        file_handler = logging.FileHandler('conference_editor.log')
+        file_handler = logging.FileHandler('CYSP-proofreader.log')
         file_handler.setFormatter(detailed_formatter)
         root_logger.addHandler(file_handler)
     except Exception as e:

@@ -29,7 +29,7 @@ OUTPUT_FILE_SUFFIX_HIGHLIGHTED = "_Edited_Highlighted"
 DEFAULT_OUTPUT_FORMAT = "docx"
 
 # Directory Configuration
-APP_DATA_DIR = Path.home() / ".conference_editor"
+APP_DATA_DIR = Path.home() / ".CYSP-proofreader"
 LOGS_DIR = APP_DATA_DIR / "logs"
 
 # Network Configuration

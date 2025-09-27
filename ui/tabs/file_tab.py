@@ -7,8 +7,30 @@ import logging
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                             QFileDialog, QLabel, QProgressBar, QTextEdit,
                             QGroupBox, QGridLayout)
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QObject
 from pathlib import Path
+
+class ProcessingWorker(QObject):
+    """Worker class for processing documents in separate thread"""
+    finished = pyqtSignal(bool, str)  # success, message
+    started = pyqtSignal()
+    
+    def __init__(self, document_processor, file_path, output_dir):
+        super().__init__()
+        self.document_processor = document_processor
+        self.file_path = file_path
+        self.output_dir = output_dir
+    
+    def process(self):
+        """Process document in separate thread"""
+        self.started.emit()
+        try:
+            success, message = self.document_processor.process_document(
+                self.file_path, self.output_dir
+            )
+            self.finished.emit(success, message)
+        except Exception as e:
+            self.finished.emit(False, f"Processing error: {str(e)}")
 
 class FileTab(QWidget):
     """File selection and processing tab"""
@@ -24,6 +46,8 @@ class FileTab(QWidget):
         self.document_processor = document_processor
         self.selected_file = None
         self.logger = logging.getLogger(__name__)
+        self.processing_thread = None
+        self.worker = None
         self.init_ui()
     
     def init_ui(self):
@@ -117,7 +141,7 @@ class FileTab(QWidget):
             self.logger.warning(f"File validation failed: {message}")
     
     def process_document(self):
-        """Start document processing"""
+        """Start document processing in separate thread"""
         if not self.selected_file:
             self.status_label.setText("Please select a file first")
             return
@@ -125,41 +149,53 @@ class FileTab(QWidget):
         # Emit signal that processing is starting
         self.process_started.emit()
         
-        try:
-            # Setup UI for processing
-            self.process_button.setEnabled(False)
-            self.browse_button.setEnabled(False)
-            self.progress_bar.setVisible(True)
-            self.progress_bar.setRange(0, 0)  # Indeterminate progress
-            self.status_label.setText("Processing document...")
-            
-            # Get output directory (same as input file)
-            output_dir = str(Path(self.selected_file).parent)
-            
-            # Process document
-            success, message = self.document_processor.process_document(
-                self.selected_file, output_dir
-            )
-            
-            # Update UI based on result
-            if success:
-                self.process_completed.emit(message)
-                self.status_label.setText("Processing completed successfully!")
-                self.logger.info(f"Processing completed: {message}")
-            else:
-                self.process_error.emit(message)
-                self.status_label.setText(f"Error: {message}")
-                self.logger.error(f"Processing failed: {message}")
-            
-        except Exception as e:
-            error_msg = f"Processing error: {str(e)}"
-            self.process_error.emit(error_msg)
-            self.status_label.setText(f"Error: {str(e)}")
-            self.logger.error(error_msg)
+        # Setup UI for processing
+        self.process_button.setEnabled(False)
+        self.browse_button.setEnabled(False)
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, 0)  # Indeterminate progress
+        self.status_label.setText("Processing document...")
         
-        finally:
-            # Reset UI
-            self.progress_bar.setVisible(False)
-            self.progress_bar.setRange(0, 100)
-            self.process_button.setEnabled(True)
-            self.browse_button.setEnabled(True)
+        # Create thread and worker
+        self.processing_thread = QThread()
+        self.worker = ProcessingWorker(
+            self.document_processor, 
+            self.selected_file, 
+            str(Path(self.selected_file).parent)
+        )
+        
+        # Move worker to thread
+        self.worker.moveToThread(self.processing_thread)
+        
+        # Connect signals
+        self.worker.started.connect(lambda: self.logger.info("Processing started in thread"))
+        self.worker.finished.connect(self.on_processing_finished)
+        self.processing_thread.started.connect(self.worker.process)
+        
+        # Start the thread
+        self.processing_thread.start()
+    
+    def on_processing_finished(self, success, message):
+        """Handle processing completion from thread"""
+        # Clean up thread
+        if self.processing_thread:
+            self.processing_thread.quit()
+            self.processing_thread.wait()
+            self.processing_thread = None
+            self.worker = None
+        
+        # Update UI based on result
+        if success:
+            self.process_completed.emit(message)
+            self.status_label.setText("Processing completed successfully!")
+            self.logger.info(f"Processing completed: {message}")
+        else:
+            self.process_error.emit(message)
+            self.status_label.setText(f"Error: {message}")
+            self.logger.error(f"Processing failed: {message}")
+        
+        # Reset UI
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setRange(0, 100)
+        self.process_button.setEnabled(True)
+        self.browse_button.setEnabled(True)

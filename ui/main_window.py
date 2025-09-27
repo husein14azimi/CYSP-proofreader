@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QVBoxLayout,
                             QWidget, QStatusBar, QLabel, QApplication)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
+import os
+import sys
 from config.settings import APP_NAME, WINDOW_WIDTH, WINDOW_HEIGHT
 from config.models import DEFAULT_MODEL
 from ui.tabs.file_tab import FileTab
@@ -20,6 +22,16 @@ from core.ai_handler import AIHandler
 from core.file_manager import FileManager
 from utils.logger import get_log_handler
 
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
+
 class MainWindow(QMainWindow):
     """Main application window with tabbed interface"""
     
@@ -29,7 +41,7 @@ class MainWindow(QMainWindow):
         self.init_core_components()
         self.init_ui()
         self.setup_connections()
-        self.set_initial_model()  # Set default model
+        self.set_initial_model()
         self.logger.info("Main window initialized")
     
     def init_core_components(self):
@@ -44,6 +56,18 @@ class MainWindow(QMainWindow):
     def init_ui(self):
         """Initialize user interface"""
         self.setWindowTitle(f"{APP_NAME}")
+        
+        # Set window icon - this will show in title bar and taskbar
+        try:
+            icon_path = get_resource_path("ui/resources/icon.ico")
+            if os.path.exists(icon_path):
+                self.setWindowIcon(QIcon(icon_path))
+            else:
+                # Fallback to default icon if not found
+                self.logger.warning(f"Icon file not found: {icon_path}")
+        except Exception as e:
+            self.logger.error(f"Failed to set window icon: {e}")
+        
         self.setGeometry(100, 100, WINDOW_WIDTH, WINDOW_HEIGHT)
         self.setMinimumSize(600, 400)
         
@@ -68,7 +92,7 @@ class MainWindow(QMainWindow):
         self.progress_label = QLabel("Ready")
         self.status_bar.addPermanentWidget(self.progress_label)
         
-        # Set initial tab (don't change this - stay on file tab)
+        # Set initial tab
         self.tab_widget.setCurrentIndex(0)
     
     def create_tabs(self):

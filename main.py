@@ -16,7 +16,7 @@ def setup_logging():
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler('conference_editor.log'),
+            logging.FileHandler('CYSP-proofreader.log'),
             logging.StreamHandler(sys.stdout)
         ]
     )

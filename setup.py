@@ -11,14 +11,14 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 setup(
-    name="conference-editing-assistant",
+    name="CYSP-proofreader",
     version="1.0.0",
-    author="Conference Editor Team",
-    author_email="",
-    description="AI-powered dictation correction tool for conference editors",
+    author="Hussein Azimi et al.",
+    author_email="hossein14azimi@gmail.com",
+    description="AI-powered proofreading tool for conference editors",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/your-username/conference-editing-assistant",
+    url="https://github.com/husein14azimi/CYSP-proofreader",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",

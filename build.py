@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build script for Conference Editing Assistant
+Build script for CYSP-proofreader
 Handles packaging and distribution
 """
 
@@ -11,10 +11,15 @@ import shutil
 from pathlib import Path
 
 def install_dependencies():
-    """Install required dependencies"""
+    """Install required dependencies including Pillow for icon handling"""
     print("Installing dependencies...")
     try:
+        # Install basic requirements first
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+        
+        # Install Pillow for icon handling
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "Pillow"])
+        
         print("Dependencies installed successfully!")
     except subprocess.CalledProcessError as e:
         print(f"Error installing dependencies: {e}")
@@ -32,13 +37,15 @@ def build_executable():
         print("PyInstaller not found. Installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
     
-    # Run PyInstaller
     try:
+        # Build with icon and include the icon in the bundle
         subprocess.check_call([
             sys.executable, "-m", "PyInstaller",
             "--onefile",
             "--windowed",
-            "--name", "ConferenceEditingAssistant",
+            "--name", "CYSP-proofreader",
+            "--icon", "ui/resources/icon.ico",  # EXE file icon
+            "--add-data", "ui/resources/icon.ico;ui/resources",  # Include icon in bundle
             "--clean",
             "main.py"
         ])
@@ -57,9 +64,9 @@ def create_distribution():
     dist_dir.mkdir(exist_ok=True)
     
     # Copy executable
-    exe_path = Path("dist/ConferenceEditingAssistant.exe")
+    exe_path = Path("dist/CYSP-proofreader.exe")
     if exe_path.exists():
-        shutil.copy2(exe_path, dist_dir / "ConferenceEditingAssistant.exe")
+        shutil.copy2(exe_path, dist_dir / "CYSP-proofreader.exe")
     
     # Copy documentation
     docs = ["README.md", "LICENSE"]
@@ -70,7 +77,7 @@ def create_distribution():
     # Create version file
     version_file = dist_dir / "VERSION.txt"
     with open(version_file, "w") as f:
-        f.write("Conference Editing Assistant v1.0.0\n")
+        f.write("CYSP-proofreader v1.0.0\n")
         f.write("Built on: " + str(Path().resolve()) + "\n")
     
     print(f"Distribution created in: {dist_dir}")
@@ -78,10 +85,10 @@ def create_distribution():
 
 def main():
     """Main build function"""
-    print("Conference Editing Assistant - Build Script")
+    print("CYSP-proofreader - Build Script")
     print("=" * 50)
     
-    # Install dependencies
+    # Install dependencies (including Pillow)
     if not install_dependencies():
         print("Failed to install dependencies")
         return False
@@ -97,7 +104,7 @@ def main():
         return False
     
     print("\nBuild completed successfully!")
-    print("Executable location: dist/ConferenceEditingAssistant.exe")
+    print("Executable location: dist/CYSP-proofreader.exe")
     print("Distribution package: dist_package/")
     return True
 

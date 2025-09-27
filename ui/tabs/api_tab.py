@@ -32,24 +32,21 @@ class APITab(QWidget):
         api_group = QGroupBox("OpenRouter API Configuration")
         api_layout = QVBoxLayout(api_group)
         
-        # API key input
+        # API key input - now auto-applies
         key_layout = QHBoxLayout()
         self.api_key_input = QLineEdit()
         self.api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.api_key_input.setPlaceholderText("Enter your OpenRouter API key")
+        self.api_key_input.textChanged.connect(self.on_api_key_changed)  # Auto-apply
         
         self.show_key_button = QPushButton("👁")
         self.show_key_button.setFixedWidth(30)
         self.show_key_button.setCheckable(True)
         self.show_key_button.clicked.connect(self.toggle_key_visibility)
         
-        self.save_key_button = QPushButton("Save Key")
-        self.save_key_button.clicked.connect(self.save_api_key)
-        
         key_layout.addWidget(QLabel("API Key:"))
         key_layout.addWidget(self.api_key_input)
         key_layout.addWidget(self.show_key_button)
-        key_layout.addWidget(self.save_key_button)
         
         api_layout.addLayout(key_layout)
         
@@ -185,33 +182,34 @@ class APITab(QWidget):
             self.api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
             self.show_key_button.setText("👁")
     
-    def save_api_key(self):
-        """Save API key and test connection"""
+    def on_api_key_changed(self):
+        """Auto-apply API key when text changes"""
         api_key = self.api_key_input.text().strip()
         
-        if not api_key:
-            QMessageBox.warning(self, "Warning", "Please enter an API key")
-            return
-        
-        try:
-            # Set API key in AI handler
-            self.ai_handler.set_api_key(api_key)
-            
-            # Emit signal
-            self.api_key_changed.emit(api_key)
-            
-            # Update status
-            self.status_label.setText("API key saved successfully")
-            self.status_label.setStyleSheet("color: green;")
-            
-            self.logger.info("API key configured successfully")
-            
-        except Exception as e:
-            error_msg = f"Failed to configure API key: {str(e)}"
-            QMessageBox.critical(self, "Error", error_msg)
-            self.status_label.setText("API configuration failed")
-            self.status_label.setStyleSheet("color: red;")
-            self.logger.error(error_msg)
+        if api_key:
+            try:
+                # Set API key in AI handler
+                self.ai_handler.set_api_key(api_key)
+                
+                # Emit signal
+                self.api_key_changed.emit(api_key)
+                
+                # Update status
+                self.status_label.setText("API key configured")
+                self.status_label.setStyleSheet("color: green;")
+                
+                self.logger.info("API key configured automatically")
+                
+            except Exception as e:
+                error_msg = f"Failed to configure API key: {str(e)}"
+                self.logger.error(error_msg)
+                self.status_label.setText("API configuration failed")
+                self.status_label.setStyleSheet("color: red;")
+        else:
+            # Clear API key if empty
+            self.ai_handler.api_key = None
+            self.status_label.setText("API not configured")
+            self.status_label.setStyleSheet("")
     
     def update_model_info(self):
         """Update model information display"""
@@ -227,8 +225,3 @@ class APITab(QWidget):
             token_limit = self.token_limit_input.value()
             if model_name:
                 self.model_info_label.setText(f"Custom model: {model_name} | Token limit: {token_limit}")
-
-# Convenience function
-def create_api_tab(ai_handler) -> APITab:
-    """Factory function to create API tab"""
-    return APITab(ai_handler)
