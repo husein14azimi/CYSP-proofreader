@@ -1,6 +1,0 @@
-2025-09-27 13:46:50,279 - ui.tabs.prompt_tab - [92mINFO[0m - [92mDefault prompt loaded[0m
-2025-09-27 13:46:50,286 - processing - [92mINFO[0m - [92mModel set to: deepseek/deepseek-chat-v3.1:free[0m
-2025-09-27 13:46:50,287 - ui.main_window - [92mINFO[0m - [92mInitial model set to: deepseek/deepseek-chat-v3.1:free[0m
-2025-09-27 13:46:50,287 - ui.main_window - [92mINFO[0m - [92mMain window initialized[0m
-2025-09-27 13:46:50,754 - __main__ - [92mINFO[0m - [92mConference Editing Assistant started successfully[0m
-2025-09-27 13:46:59,428 - ui.main_window - [92mINFO[0m - [92mApplication closing[0m

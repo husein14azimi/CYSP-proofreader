@@ -4,6 +4,7 @@ Handles file selection, processing initiation, and progress display
 """
 
 import logging
+import time
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                             QFileDialog, QLabel, QProgressBar, QTextEdit,
                             QGroupBox, QGridLayout)
@@ -14,23 +15,55 @@ class ProcessingWorker(QObject):
     """Worker class for processing documents in separate thread"""
     finished = pyqtSignal(bool, str)  # success, message
     started = pyqtSignal()
+    status_update = pyqtSignal(str)  # For status bar updates
     
-    def __init__(self, document_processor, file_path, output_dir):
+    def __init__(self, document_processor, file_path, output_dir, token_count, status_callback=None):
         super().__init__()
         self.document_processor = document_processor
         self.file_path = file_path
         self.output_dir = output_dir
+        self.token_count = token_count
+        self.status_callback = status_callback  # Store the callback function
+        self.ai_handler = document_processor.ai_handler
+        self.current_model = document_processor.current_model
     
     def process(self):
-        """Process document in separate thread"""
+        """Process document in separate thread with detailed status updates"""
         self.started.emit()
+        
+        # Emit status update through signal
+        if self.status_update:
+            self.status_update.emit(f"Preparing document: {self.token_count} tokens total")
+        
         try:
-            success, message = self.document_processor.process_document(
-                self.file_path, self.output_dir
-            )
+            # Process with AI with detailed status updates
+            success, message = self._process_with_detailed_status()
+            
             self.finished.emit(success, message)
         except Exception as e:
+            if self.status_update:
+                self.status_update.emit(f"Error: {str(e)}")
             self.finished.emit(False, f"Processing error: {str(e)}")
+    
+    def _process_with_detailed_status(self):
+        """Process with detailed status updates"""
+        try:
+            # Actually process the document
+            success, message = self.document_processor.process_document_with_status(
+                self.file_path, 
+                self.output_dir, 
+                self._emit_status_update  # Use our wrapper function
+            )
+            
+            return success, message
+            
+        except Exception as e:
+            return False, f"Processing error: {str(e)}"
+    
+    def _emit_status_update(self, status_message):
+        """Wrapper to emit status updates through Qt signal"""
+        if self.status_update:
+            self.status_update.emit(status_message)
 
 class FileTab(QWidget):
     """File selection and processing tab"""
@@ -48,6 +81,7 @@ class FileTab(QWidget):
         self.logger = logging.getLogger(__name__)
         self.processing_thread = None
         self.worker = None
+        self.token_count = 0
         self.init_ui()
     
     def init_ui(self):
@@ -146,6 +180,20 @@ class FileTab(QWidget):
             self.status_label.setText("Please select a file first")
             return
         
+        # Check if model is set
+        if not self.document_processor.current_model:
+            self.status_label.setText("No AI model selected. Please configure a model in API tab.")
+            return
+        
+        # Convert DOCX to Markdown to get token count first
+        try:
+            from utils.converters import docx_to_markdown
+            markdown_content, token_count = docx_to_markdown(self.selected_file)
+            self.token_count = token_count
+        except Exception as e:
+            self.status_label.setText(f"Error reading document: {str(e)}")
+            return
+        
         # Emit signal that processing is starting
         self.process_started.emit()
         
@@ -154,14 +202,15 @@ class FileTab(QWidget):
         self.browse_button.setEnabled(False)
         self.progress_bar.setVisible(True)
         self.progress_bar.setRange(0, 0)  # Indeterminate progress
-        self.status_label.setText("Processing document...")
+        self.status_label.setText(f"Preparing document with {self.document_processor.current_model}...")
         
         # Create thread and worker
         self.processing_thread = QThread()
         self.worker = ProcessingWorker(
             self.document_processor, 
             self.selected_file, 
-            str(Path(self.selected_file).parent)
+            str(Path(self.selected_file).parent),
+            token_count
         )
         
         # Move worker to thread
@@ -170,10 +219,17 @@ class FileTab(QWidget):
         # Connect signals
         self.worker.started.connect(lambda: self.logger.info("Processing started in thread"))
         self.worker.finished.connect(self.on_processing_finished)
+        self.worker.status_update.connect(self.update_status_bar)
         self.processing_thread.started.connect(self.worker.process)
         
         # Start the thread
         self.processing_thread.start()
+    
+    def update_status_bar(self, status_message):
+        """Update status bar with detailed information"""
+        # This will be called from the processing thread
+        # The main window will handle updating the actual status bar
+        self.status_label.setText(status_message)
     
     def on_processing_finished(self, success, message):
         """Handle processing completion from thread"""

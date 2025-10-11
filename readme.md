@@ -1,12 +1,12 @@
-# CYSP Proofreader Project
+# CYSP Proofreader
 
 AI-powered dictation correction tool for conference editors working with scientific articles.
 
 ## Features
 
 - **AI-Powered Correction**: Uses advanced AI models to fix spelling and dictation errors
-- **Dual Output**: Generates both clean and highlighted versions of edited documents
-- **Multiple AI Models**: Support for models via OpenRouter
+- **Single Output**: Generates one clean document with AI corrections
+- **Multiple AI Models**: Support for DeepSeek, Claude, GPT, and other models via OpenRouter
 - **Farsi/English Support**: Handles mixed Persian and English content
 - **Privacy Focused**: Documents are processed securely through OpenRouter API
 - **User-Friendly Interface**: Simple tabbed interface for easy operation
@@ -14,7 +14,7 @@ AI-powered dictation correction tool for conference editors working with scienti
 ## Requirements
 
 - Windows 10 or 11
-- OpenRouter API key (free tier acceptable)
+- OpenRouter API key (free tier available)
 - Microsoft Word for viewing output documents
 
 ## Installation
@@ -28,54 +28,57 @@ Download the latest release from the releases page.
 3. Run `pip install -r requirements.txt`
 4. Run `python main.py`
 
-
 ## Usage
 
 1. **Get API Key**: Sign up at [OpenRouter](https://openrouter.ai/) and get your free API key
-2. **Select Document**: (having the program running,) Choose a DOCX file to process
-3. **Configure API**: Enter your OpenRouter API key and select an AI model. If you're entering a custom model, enter the token limit either.
-4. **Process**: Click "Process Document" to start AI correction
-5. **Review**: Check the generated output files in the same directory
+2. **Configure Privacy Settings**: After getting your API key, visit [OpenRouter Privacy Settings](https://openrouter.ai/settings/privacy) and enable:
+   - "Enable free endpoints that may train on inputs"
+   - "Enable free endpoints that may publish prompts"
+3. **Select Document**: Choose a DOCX file to process
+4. **Configure API**: Enter your OpenRouter API key and select an AI model
+5. **Process**: Click "Process Document" to start AI correction
+6. **Review**: Check the generated output file in the same directory
 
-## Output Files
+## Output File
 
-Only the reviewed DOCX file.
+- `Document_Edited.docx`: Clean version with AI corrections
 
-## Default AI Models
+## Supported AI Models
 
-- DeepSeek v3 (default, 128K token limit)
-- Claude 3 Haiku (200K token limit)
-- GPT-3.5 Turbo (16K token limit)
-- Mistral Tiny (32K token limit)
+- DeepSeek v3.1 Free (`deepseek/deepseek-chat-v3.1:free`)
+- Microsoft Phi-3 Mini Free
+- Google Gemma 7B IT Free
+- Mistral 7B Free
+- And many others via OpenRouter
 
+## Development
 
-## Contributing to develop and improve this project
-
-If you want to participate in developing this project, after getting the code from the repository, you can run the project via
-
-```bash
-python main.py
+### Project Structure
+```
+cysp-proofreader/
+├── main.py # Entry point
+├── config/ # Configuration files
+├── core/ # Core processing modules
+├── ui/ # User interface components
+├── utils/ # Utility functions
+└── requirements.txt # Dependencies
 ```
 
-and you can build the EXE file via
 
+### Building from Source
 ```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run development version
+python main.py
+
+# Build executable
 python build.py
 ```
-the output file will be in the `dist` or `dist_package` directory. 
 
+License
+MIT License - see LICENSE file for details
 
-## Usage in CYSP
-after the reviewed/revised docx file is served, you can see the modified segments using Microsoft Word (or other programs like LibreOffice Writer)'s compare tool.
-
-## Next steps in improvement if you are interested:
-- UI
-- PYPI distribution (the `setup.py`)
-
-<br>
-<br>
-<br>
-
-This project was developed on vibe coding mode by the help of QWEN Coder, a powerful coding AI.
-
-Thank you and good luck!
+Support
+For issues and feature requests, please open an issue on GitHub.

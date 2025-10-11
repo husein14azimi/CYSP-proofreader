@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
     
     def init_ui(self):
         """Initialize user interface"""
-        self.setWindowTitle(f"{APP_NAME}")
+        self.setWindowTitle(f"CYSP Proofreader")
         
         # Set window icon - this will show in title bar and taskbar
         try:
@@ -108,11 +108,11 @@ class MainWindow(QMainWindow):
         # Prompt Customization Tab
         self.prompt_tab = PromptTab()
         self.tab_widget.addTab(self.prompt_tab, "Prompt Customization")
-        
-        # Processing Logs Tab
-        self.logs_tab = LogsTab()
-        self.tab_widget.addTab(self.logs_tab, "Processing Logs")
     
+        # Processing Logs Tab (first tab as requested)
+        self.logs_tab = LogsTab()
+        self.tab_widget.addTab(self.logs_tab, "All Logs")
+        
     def setup_connections(self):
         """Setup signal-slot connections"""
         # Connect file tab signals
@@ -140,21 +140,20 @@ class MainWindow(QMainWindow):
     def on_process_started(self):
         """Handle process started event"""
         self.progress_label.setText("Processing document...")
-        self.tab_widget.setTabEnabled(0, False)  # Disable file tab during processing
+        self.tab_widget.setTabEnabled(1, False)  # Disable file tab during processing (index 1 now)
         self.status_bar.showMessage("Document processing started", 3000)
-        # Don't change tab - stay on file tab
     
     def on_process_completed(self, message: str):
         """Handle process completed event"""
         self.progress_label.setText("Ready")
-        self.tab_widget.setTabEnabled(0, True)  # Re-enable file tab
+        self.tab_widget.setTabEnabled(1, True)  # Re-enable file tab (index 1 now)
         self.status_bar.showMessage(f"Processing completed: {message}", 5000)
     
     def on_process_error(self, error_message: str):
         """Handle process error event"""
         self.progress_label.setText("Error occurred")
         self.progress_label.setStyleSheet("color: red;")
-        self.tab_widget.setTabEnabled(0, True)  # Re-enable file tab
+        self.tab_widget.setTabEnabled(1, True)  # Re-enable file tab (index 1 now)
         self.status_bar.showMessage(f"Error: {error_message}", 10000)
         
         # Reset color after delay

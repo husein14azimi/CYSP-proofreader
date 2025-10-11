@@ -32,7 +32,7 @@ class LogsTab(QWidget):
         # Tab widget for different log types
         self.log_tabs = QTabWidget()
         
-        # All Logs Tab
+        # All Logs Tab (first tab as requested)
         self.all_log_text = QTextEdit()
         self.all_log_text.setReadOnly(True)
         self.setup_log_text_edit(self.all_log_text)

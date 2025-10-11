@@ -4,6 +4,8 @@ Handles DOCX reading, processing, and output generation
 """
 
 import logging
+import time
+from PyQt6.QtCore import pyqtSignal
 from pathlib import Path
 from typing import Tuple, List
 import docx
@@ -42,6 +44,20 @@ class DocumentProcessor:
         Returns:
             Tuple of (success: bool, message: str)
         """
+        return self.process_document_with_status(input_path, output_dir, None)
+    
+    def process_document_with_status(self, input_path: str, output_dir: str, status_callback=None) -> Tuple[bool, str]:
+        """
+        Process entire document through AI with status updates
+        
+        Args:
+            input_path: Path to input DOCX file
+            output_dir: Directory for output files
+            status_callback: Function to call with status updates
+            
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
         try:
             self.logger.info(f"Starting document processing: {input_path}")
             
@@ -50,8 +66,13 @@ class DocumentProcessor:
                 return False, "No AI model selected. Please configure a model in API tab."
             
             # Convert DOCX to Markdown
+            if status_callback:
+                status_callback("Converting document to Markdown...")
             markdown_content, token_count = self._docx_to_markdown(input_path)
             self.logger.info(f"Document converted to Markdown. Tokens: {token_count}")
+            
+            if status_callback:
+                status_callback(f"Document converted. Total tokens: {token_count}")
             
             # Validate token limit
             max_tokens = self.ai_handler.get_model_max_tokens(self.current_model)
@@ -59,21 +80,30 @@ class DocumentProcessor:
                 return False, f"Document too large ({token_count} tokens). Max: {max_tokens}"
             
             # Process with AI
-            self.logger.info(f"Sending to AI model: {self.current_model}")
-            edited_markdown = self.ai_handler.process_text(markdown_content, self.current_model)
+            if status_callback:
+                status_callback(f"Sending {token_count} tokens to {self.current_model}...")
+            edited_markdown = self.ai_handler.process_text_with_status(
+                markdown_content, self.current_model, status_callback
+            )
             
             if not edited_markdown:
                 return False, "AI processing failed - empty response"
             
             # Generate single output file
+            if status_callback:
+                status_callback("Generating output file...")
             success, message = self._generate_output_file(
                 input_path, output_dir, edited_markdown
             )
             
             if success:
                 self.logger.info("Document processing completed successfully")
+                if status_callback:
+                    status_callback("Processing completed successfully!")
             else:
                 self.logger.error(f"Output generation failed: {message}")
+                if status_callback:
+                    status_callback(f"Output generation failed: {message}")
                 
             return success, message
             
