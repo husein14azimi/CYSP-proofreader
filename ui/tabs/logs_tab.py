@@ -32,6 +32,12 @@ class LogsTab(QWidget):
         # Tab widget for different log types
         self.log_tabs = QTabWidget()
         
+        # All Logs Tab
+        self.all_log_text = QTextEdit()
+        self.all_log_text.setReadOnly(True)
+        self.setup_log_text_edit(self.all_log_text)
+        self.log_tabs.addTab(self.all_log_text, "All Logs")
+        
         # AI Logs Tab
         self.ai_log_text = QTextEdit()
         self.ai_log_text.setReadOnly(True)
@@ -49,12 +55,6 @@ class LogsTab(QWidget):
         self.program_log_text.setReadOnly(True)
         self.setup_log_text_edit(self.program_log_text)
         self.log_tabs.addTab(self.program_log_text, "Program Logs")
-        
-        # All Logs Tab
-        self.all_log_text = QTextEdit()
-        self.all_log_text.setReadOnly(True)
-        self.setup_log_text_edit(self.all_log_text)
-        self.log_tabs.addTab(self.all_log_text, "All Logs")
         
         layout.addWidget(self.log_tabs)
         

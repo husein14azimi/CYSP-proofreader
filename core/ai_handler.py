@@ -27,8 +27,8 @@ class AIHandler:
         self.session.headers.update({
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://conference-editor.local",
-            "X-Title": "Conference Editing Assistant"
+            "HTTP-Referer": "https://cysp2025.ut.ac.ir",
+            "X-Title": "CYSP Proofreader"
         })
         
     def process_text(self, text: str, model_name: str) -> Optional[str]:
