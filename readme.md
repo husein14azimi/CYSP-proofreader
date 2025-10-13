@@ -82,3 +82,7 @@ MIT License - see LICENSE file for details
 
 Support
 For issues and feature requests, please open an issue on GitHub.
+
+> **Note**
+>
+> The free api key might run out of credit/quota if the docx file is heavy/big. for such files, splitting is recommended. you can also check the number of tokens in the program logs.
